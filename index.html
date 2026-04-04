@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Virtual Assistant</h1>
+            <div class="header-buttons">
+                <button id="manage-learned" title="Manage Learned Responses">📚</button>
+                <button id="theme-toggle" title="Toggle Dark Mode">🌙</button>
+            </div>
+        </header>
+        
+        <div class="chat-container" id="chat-container">
+            <div id="response-area" class="response-area"></div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+            <button id="send-btn">Send</button>
+            <button id="voice-btn" title="Voice Input">🎤</button>
+        </div>
+    </div>
+
+    <!-- Learning Modal -->
+    <div id="learn-modal" class="modal">
+        <div class="modal-content">
+            <h2>Teach the Assistant</h2>
+            <p><strong>You said:</strong> <span id="learned-question"></span></p>
+            
+            <label for="assistant-response">How should I respond?</label>
+            <textarea id="assistant-response" rows="4" placeholder="Type the desired response..."></textarea>
+            
+            <div class="modal-buttons">
+                <button id="cancel-learn">Cancel</button>
+                <button id="save-learn">Save Response</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

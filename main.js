@@ -29,16 +29,16 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
 
-// IPC Handler: Save Data
+// IPC Handler: Save Data (Now in project root)
 ipcMain.on('save-data', (event, { file, data }) => {
-    const filePath = path.join(app.getPath('userData'), file);
+    const filePath = path.join(__dirname, file);
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     event.reply('save-data-success', { file });
 });
 
-// IPC Handler: Load Data
+// IPC Handler: Load Data (Now in project root)
 ipcMain.on('load-data', (event, { file }) => {
-    const filePath = path.join(app.getPath('userData'), file);
+    const filePath = path.join(__dirname, file);
     if (fs.existsSync(filePath)) {
         const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         event.reply('load-data-success', { file, data });

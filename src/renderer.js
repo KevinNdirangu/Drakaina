@@ -157,8 +157,21 @@ function speak(text) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
-    utterance.voice = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.lang === 'en-US');
-    utterance.rate = 1.0;
+    
+    // Attempt to find a high-quality "English" voice
+    const preferredVoices = ['Google US English', 'Samantha', 'Microsoft Zira', 'Microsoft Sarah'];
+    let selectedVoice = voices.find(v => preferredVoices.includes(v.name));
+    
+    if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.startsWith('en-'));
+    }
+    
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log(`Using voice: ${selectedVoice.name}`);
+    }
+    
+    utterance.rate = 1.05;
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
 }

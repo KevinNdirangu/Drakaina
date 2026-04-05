@@ -291,6 +291,30 @@ closeAboutBtn.onclick = () => aboutModal.style.display = 'none';
 themeToggle.onclick = toggleTheme;
 manageLearnedBtn.onclick = showLearnedResponses;
 
+voiceBtn.onclick = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Voice recognition is not supported in this environment.");
+        return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onstart = () => {
+        voiceBtn.textContent = '🛑';
+        voiceBtn.style.background = '#dc3545';
+    };
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        processInput(transcript);
+    };
+    recognition.onend = () => {
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.background = '#28a745';
+    };
+    recognition.start();
+};
+
 saveLearnBtn.onclick = () => {
     const answer = assistantResponseInput.value.trim();
     if (answer && pendingQuestion) {

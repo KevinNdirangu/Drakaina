@@ -1,5 +1,5 @@
 *.txt
 node_modules/
-*.json
-!package.json
-!package-lock.json
+history.json
+notes.json
+# Keep knowledge.json tracked as the seed data

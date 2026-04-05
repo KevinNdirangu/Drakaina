@@ -1,0 +1,225 @@
+REBUILDING / DEV WORKFLOW GUIDE (Universal)
+Last Updated: April 2026
+Purpose: Rebuild, develop, and release Electron (and similar Node.js) projects efficiently.
+
+==============================
+
+1. FULL CLEANUP (When things break or before fresh build)
+   ==============================
+   Run Command Prompt as Administrator
+
+CMD:
+D:
+cd "PROJECT BETA"
+
+taskkill /F /IM electron.exe
+taskkill /F /IM Employee*   REM ⚠️ Confirm process name before using wildcard
+
+rd /s /q dist
+rmdir /s /q dist
+
+rd /s /q node_modules
+rmdir /s /q node_modules
+
+del package-lock.json
+
+rd /s /q "%LOCALAPPDATA%\electron-builder\Cache"
+rmdir /s /q "%LOCALAPPDATA%\electron-builder\Cache"
+
+Optional Deep Clean:
+npm cache clean --force
+
+==============================
+2. REINSTALL & BUILD
+====================
+
+PowerShell / CMD:
+npm install
+
+# Build options (use what your project supports)
+
+npm run dist
+npm run make:exe
+npx electron-builder --win --x64
+
+==============================
+3. GIT SETUP (First Time Only)
+==============================
+
+Install Git:
+https://git-scm.com/downloads
+
+Bash / CMD:
+git config --global user.name "KevinNdirangu"
+git config --global user.email "[kelvinmwanikindirangu@gmail.com](mailto:kelvinmwanikindirangu@gmail.com)"
+
+git init
+git branch -M main
+
+git remote add origin https://github.com/yourusername/your-repo.git
+
+git add .
+git status
+git commit -m "Initial commit with clean project files"
+
+git push -u origin main
+
+==============================
+4. DAILY DEVELOPMENT WORKFLOW
+=============================
+
+git add .
+git commit -m "Describe your change clearly"
+git push
+
+==============================
+5. IF PROJECT IS NOT CLEAN (Fallback Flow)
+==========================================
+
+git add .
+git commit -m "WIP: prepping for version bump"
+
+npm version patch
+
+Use this when:
+
+* You forgot to commit
+* You’re mid-progress but need to move forward
+
+==============================
+6. VERSIONING & RELEASE PROCESS (IMPORTANT ORDER)
+=================================================
+
+# 1. Save all work
+
+git add .
+git commit -m "Describe changes in this release"
+git push
+
+# 2. Bump version (creates Git tag)
+
+npm version patch
+npm version minor
+npm version major
+
+# 3. Push version + tags
+
+git push && git push --tags
+
+==============================
+7. BUILD AFTER VERSION BUMP
+===========================
+
+npm run dist
+or
+npx electron-builder --win --x64
+
+==============================
+8. AUTOMATED RELEASE (OPTIONAL)
+===============================
+
+npm run release
+
+Should:
+
+* Increase version
+* Build EXE
+* Upload to GitHub
+* Trigger auto-update on user machines
+
+==============================
+9. REQUIRED PACKAGES
+====================
+
+npm install electron-updater --save
+npm install electron-builder --save-dev
+
+==============================
+10. AUTO-UPDATE SETUP (Electron)
+================================
+
+In main.js:
+
+const { autoUpdater } = require('electron-updater');
+autoUpdater.checkForUpdatesAndNotify();
+
+Notes:
+
+* Works directly with public GitHub repositories
+* Private repositories require GH_TOKEN
+
+==============================
+11. RECOMMENDED package.json (CORE PARTS)
+=========================================
+
+{
+"name": "your-app",
+"productName": "Your App",
+"version": "1.0.0",
+"author": "Kevin Ndirangu",
+"scripts": {
+"dist": "electron-builder --win --x64",
+"release": "npm run build && npm version patch && git push && git push --tags && electron-builder --publish always"
+},
+"build": {
+"appId": "com.yourname.app",
+"productName": "Your App",
+"directories": {
+"output": "dist"
+},
+"publish": [
+{
+"provider": "github",
+"owner": "yourusername",
+"repo": "your-repo"
+}
+]
+}
+}
+
+==============================
+12. REAL-WORLD TROUBLESHOOTING
+==============================
+
+If build fails:
+
+* Delete node_modules
+* Delete package-lock.json
+* Run npm install
+
+If Electron behaves weird:
+taskkill /F /IM electron.exe
+
+If builds are inconsistent:
+rd /s /q "%LOCALAPPDATA%\electron-builder\Cache"
+
+If everything breaks:
+→ Run FULL CLEANUP (Section 1)
+
+==============================
+13. QUICK COMMAND SUMMARY
+=========================
+
+Full rebuild:
+Cleanup → npm install → npm run dist
+
+Normal work:
+git add . → git commit → git push
+
+Release:
+Commit → npm version patch → git push && git push --tags → build
+
+==============================
+FINAL NOTE
+==========
+
+This file is your workflow system and recovery guide.
+
+Use it when:
+
+* Builds fail
+* Environment is broken
+* Releasing new versions
+* You forget steps
+
+Keep updating it as you learn new fixes and improvements.

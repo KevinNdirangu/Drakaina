@@ -1,0 +1,23 @@
+{
+  "name": "drakaina",
+  "productName": "Drakaina",
+  "version": "1.2.0",
+  "description": "Drakaina - Powered by Aegon 🐉",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KevinNdirangu/Drakaina.git"
+  },
+  "author": "Ndirangu Mwaniki",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  }
+}

@@ -1,6 +1,8 @@
-// Drakaina 1.2.0 - Advanced Intent & Learning System
-let learnedResponses = JSON.parse(localStorage.getItem('learnedResponses')) || {};
-let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+const { ipcRenderer } = require('electron');
+
+// Drakaina 1.2.1 - Electron Edition
+let learnedResponses = {};
+let chatHistory = [];
 
 // Constants
 const MAX_HISTORY = 100;
@@ -25,7 +27,27 @@ const closeAboutBtn = document.getElementById('close-about');
 let pendingQuestion = '';
 
 /**
- * Advanced Intent Recognition (Score-based)
+ * File Persistence Logic
+ */
+function saveData(file, data) {
+    ipcRenderer.send('save-data', { file, data });
+}
+
+function loadData(file) {
+    ipcRenderer.send('load-data', { file });
+}
+
+ipcRenderer.on('load-data-success', (event, { file, data }) => {
+    if (file === 'knowledge.json') {
+        learnedResponses = data || {};
+    } else if (file === 'history.json') {
+        chatHistory = data || [];
+        renderHistory();
+    }
+});
+
+/**
+ * Advanced Intent Recognition (Enhanced Score-based)
  */
 function recognizeIntent(input) {
     const text = input.toLowerCase().trim();
@@ -40,34 +62,28 @@ function recognizeIntent(input) {
     };
 
     // Time keywords
-    if (/\b(time|clock|hour|minutes)\b/.test(text)) scores.time += 2;
-    if (/\b(what|current|tell|now)\b/.test(text) && scores.time > 0) scores.time += 1;
+    if (/\b(time|clock|hour|minutes|what.*time|current.*time)\b/.test(text)) scores.time += 3;
 
     // Date keywords
-    if (/\b(date|day|today|month|year|calendar)\b/.test(text)) scores.date += 2;
+    if (/\b(date|day|today|month|year|calendar|what.*date)\b/.test(text)) scores.date += 3;
 
     // Morse keywords
-    if (/\b(morse|dots|dashes)\b/.test(text)) scores.morse += 3;
-    if (/\b(translate|code|to)\b/.test(text)) scores.morse += 1;
+    if (/\b(morse|dots|dashes|translate.*to.*morse)\b/.test(text)) scores.morse += 4;
 
     // QR keywords
-    if (/\b(qr|code|scan|barcode)\b/.test(text)) scores.qr += 2;
-    if (/\b(generate|make|create)\b/.test(text)) scores.qr += 1;
+    if (/\b(qr|code|scan|barcode|generate.*qr)\b/.test(text)) scores.qr += 3;
 
     // Note keywords
-    if (/\b(note|remember|memo|remind)\b/.test(text)) scores.note += 2;
-    if (/\b(take|save|write)\b/.test(text)) scores.note += 1;
+    if (/\b(note|remember|memo|remind|save.*note)\b/.test(text)) scores.note += 3;
 
-    // Weather keywords (New from app.py)
-    if (/\b(weather|temperature|forecast|climate|rain|sun)\b/.test(text)) scores.weather += 3;
-    if (/\b(in|at|for)\b/.test(text) && scores.weather > 0) scores.weather += 1;
+    // Weather keywords
+    if (/\b(weather|temperature|forecast|climate|rain|sun|in.*(\w+))\b/.test(text)) scores.weather += 3;
 
     // Identity keywords
-    if (/\b(who|name|drakaina|aegon|identity)\b/.test(text)) scores.identity += 2;
+    if (/\b(who|name|drakaina|aegon|identity|who.*are.*you)\b/.test(text)) scores.identity += 4;
 
-    // Find the highest score
     let bestIntent = 'unknown';
-    let highestScore = 2; // Minimum score to qualify
+    let highestScore = 2; 
 
     for (const [intent, score] of Object.entries(scores)) {
         if (score > highestScore) {
@@ -122,7 +138,18 @@ function addMessage(text, sender) {
     
     chatHistory.push({ sender, text, time: new Date().getTime() });
     if (chatHistory.length > MAX_HISTORY) chatHistory.shift();
-    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+    saveData('history.json', chatHistory);
+}
+
+function renderHistory() {
+    responseArea.innerHTML = '';
+    chatHistory.forEach(m => {
+        const div = document.createElement('div');
+        div.className = `message ${m.sender}`;
+        div.textContent = m.text;
+        responseArea.appendChild(div);
+    });
+    responseArea.scrollTop = responseArea.scrollHeight;
 }
 
 function speak(text) {
@@ -172,8 +199,8 @@ function processInput(input) {
         case 'note':
             const noteText = input.replace(/take|save|write|note|remember|memo/gi, '').trim();
             if (noteText) {
-                saveNote(noteText);
-                response = "Strategic note saved to local memory.";
+                saveData('notes.json', { note: noteText, time: new Date().toLocaleString() });
+                response = "Strategic note saved to JSON memory.";
             } else {
                 response = "What would you like me to remember?";
             }
@@ -182,7 +209,6 @@ function processInput(input) {
             response = "I can see you're asking about the weather! I currently don't have an active API key to fetch live data, but I can help you set one up in the code.";
             break;
         default:
-            // Check learned responses with fuzzy matching
             let bestMatch = null;
             let highestScore = SIMILARITY_THRESHOLD;
 
@@ -226,12 +252,6 @@ function generateQRCode(data) {
     new QRCode(qrDiv, { text: data, width: 200, height: 200 });
 }
 
-function saveNote(text) {
-    let notes = JSON.parse(localStorage.getItem('drakaina_notes')) || [];
-    notes.push({ text, time: new Date().toLocaleString() });
-    localStorage.setItem('drakaina_notes', JSON.stringify(notes));
-}
-
 function showLearnedResponses() {
     const entries = Object.entries(learnedResponses);
     let msg = entries.length ? "Learned Knowledge:\n\n" : "No learned responses yet.";
@@ -243,7 +263,6 @@ function toggleTheme() {
     document.body.classList.toggle('dark');
     const isDark = document.body.classList.contains('dark');
     themeToggle.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
 // Listeners
@@ -259,8 +278,8 @@ saveLearnBtn.onclick = () => {
     const answer = assistantResponseInput.value.trim();
     if (answer && pendingQuestion) {
         learnedResponses[pendingQuestion.toLowerCase()] = answer;
-        localStorage.setItem('learnedResponses', JSON.stringify(learnedResponses));
-        addMessage("Understood. I have added this to my knowledge base.", "assistant");
+        saveData('knowledge.json', learnedResponses);
+        addMessage("Knowledge acquired and saved to the JSON memory bank.", "assistant");
     }
     modal.style.display = 'none';
 };
@@ -268,20 +287,9 @@ saveLearnBtn.onclick = () => {
 cancelLearnBtn.onclick = () => modal.style.display = 'none';
 
 window.onload = () => {
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark');
-        themeToggle.textContent = '☀️';
-    }
-    
-    // Load History
-    chatHistory.forEach(m => {
-        const div = document.createElement('div');
-        div.className = `message ${m.sender}`;
-        div.textContent = m.text;
-        responseArea.appendChild(div);
-    });
-    responseArea.scrollTop = responseArea.scrollHeight;
+    loadData('knowledge.json');
+    loadData('history.json');
 
     window.speechSynthesis.getVoices();
-    if (!chatHistory.length) addMessage("Hello Ndirangu. Drakaina is online. How shall we proceed?", "assistant");
+    if (!chatHistory.length) addMessage("Hello Ndirangu. Drakaina 1.2.1 is online. How shall we proceed?", "assistant");
 };

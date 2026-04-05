@@ -9,7 +9,10 @@ function createWindow() {
         backgroundColor: '#1a1a2e',
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            // Add these to potentially help with network-related issues
+            webSecurity: false,
+            allowRunningInsecureContent: true
         },
         title: "Drakaina 🐉"
     });

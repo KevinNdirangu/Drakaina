@@ -206,6 +206,17 @@ button {
     color: var(--header-text);
 }
 
+.sys-item {
+    padding: 12px;
+    margin: 10px 0;
+    background: var(--assistant-bg);
+    border-radius: 10px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    border-left: 4px solid var(--accent-color);
+}
+
 .modal-content label {
     display: block;
     margin: 15px 0 8px;

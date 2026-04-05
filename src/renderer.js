@@ -23,6 +23,10 @@ const manageLearnedBtn = document.getElementById('manage-learned');
 const aboutBtn = document.getElementById('about-btn');
 const aboutModal = document.getElementById('about-modal');
 const closeAboutBtn = document.getElementById('close-about');
+const dashboardBtn = document.getElementById('dashboard-btn');
+const dashboardModal = document.getElementById('dashboard-modal');
+const closeDashboardBtn = document.getElementById('close-dashboard');
+const sysInfoContent = document.getElementById('sys-info-content');
 
 let pendingQuestion = '';
 
@@ -288,6 +292,35 @@ userInput.onkeypress = (e) => { if (e.key === 'Enter') sendBtn.click(); };
 
 aboutBtn.onclick = () => aboutModal.style.display = 'flex';
 closeAboutBtn.onclick = () => aboutModal.style.display = 'none';
+
+dashboardBtn.onclick = () => {
+    dashboardModal.style.display = 'flex';
+    requestSysInfo();
+};
+
+closeDashboardBtn.onclick = () => {
+    dashboardModal.style.display = 'none';
+    if (sysInfoInterval) clearInterval(sysInfoInterval);
+};
+
+let sysInfoInterval;
+
+function requestSysInfo() {
+    ipcRenderer.send('get-sys-info');
+    if (sysInfoInterval) clearInterval(sysInfoInterval);
+    sysInfoInterval = setInterval(() => {
+        ipcRenderer.send('get-sys-info');
+    }, 2000);
+}
+
+ipcRenderer.on('sys-info-data', (event, data) => {
+    sysInfoContent.innerHTML = `
+        <div class="sys-item"><strong>CPU:</strong> ${data.cpu.brand} @ ${data.cpu.load}% (${data.cpu.temp}°C)</div>
+        <div class="sys-item"><strong>RAM:</strong> ${data.mem.used} GB / ${data.mem.total} GB (${data.mem.percent}%)</div>
+        <div class="sys-item"><strong>Net:</strong> RX: ${data.net.rx} MB/s | TX: ${data.net.tx} MB/s</div>
+    `;
+});
+
 themeToggle.onclick = toggleTheme;
 manageLearnedBtn.onclick = showLearnedResponses;
 

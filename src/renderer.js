@@ -155,7 +155,11 @@ function renderHistory() {
 function speak(text) {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Correct pronunciation for "Ndirangu" before speaking
+    let processedText = text.replace(/Ndirangu/g, 'Dirarngo');
+    
+    const utterance = new SpeechSynthesisUtterance(processedText);
     const voices = window.speechSynthesis.getVoices();
     
     // Attempt to find a high-quality "English" voice

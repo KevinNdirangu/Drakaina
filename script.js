@@ -1,9 +1,12 @@
-// Virtual Assistant - Fully Enhanced Version
+// Drakaina 1.2.0 - Advanced Intent & Learning System
 let learnedResponses = JSON.parse(localStorage.getItem('learnedResponses')) || {};
 let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
-let chatContext = []; // For short-term memory (last 10 exchanges)
-const MAX_CONTEXT = 10;
 
+// Constants
+const MAX_HISTORY = 100;
+const SIMILARITY_THRESHOLD = 0.7;
+
+// DOM Elements
 const responseArea = document.getElementById('response-area');
 const userInput = document.getElementById('user-input');
 const sendBtn = document.getElementById('send-btn');
@@ -21,36 +24,84 @@ const closeAboutBtn = document.getElementById('close-about');
 
 let pendingQuestion = '';
 
-// Enhanced Intent Recognition
+/**
+ * Advanced Intent Recognition (Score-based)
+ */
 function recognizeIntent(input) {
-    const lower = input.toLowerCase().trim();
-    if (/(\btime\b|what.*time|current time|time now|clock)/i.test(lower)) return 'time';
-    if (/(\bdate\b|today.*date|current date|what day|day today)/i.test(lower)) return 'date';
-    if (/morse|to morse code|translate.*morse/i.test(lower)) return 'morse';
-    if (/qr code|generate qr|make qr|qr for/i.test(lower)) return 'qr_code';
-    if (/take a note|save a note|remember|note that|add note/i.test(lower)) return 'note';
-    return 'unknown';
+    const text = input.toLowerCase().trim();
+    const scores = {
+        time: 0,
+        date: 0,
+        morse: 0,
+        qr: 0,
+        note: 0,
+        weather: 0,
+        identity: 0
+    };
+
+    // Time keywords
+    if (/\b(time|clock|hour|minutes)\b/.test(text)) scores.time += 2;
+    if (/\b(what|current|tell|now)\b/.test(text) && scores.time > 0) scores.time += 1;
+
+    // Date keywords
+    if (/\b(date|day|today|month|year|calendar)\b/.test(text)) scores.date += 2;
+
+    // Morse keywords
+    if (/\b(morse|dots|dashes)\b/.test(text)) scores.morse += 3;
+    if (/\b(translate|code|to)\b/.test(text)) scores.morse += 1;
+
+    // QR keywords
+    if (/\b(qr|code|scan|barcode)\b/.test(text)) scores.qr += 2;
+    if (/\b(generate|make|create)\b/.test(text)) scores.qr += 1;
+
+    // Note keywords
+    if (/\b(note|remember|memo|remind)\b/.test(text)) scores.note += 2;
+    if (/\b(take|save|write)\b/.test(text)) scores.note += 1;
+
+    // Weather keywords (New from app.py)
+    if (/\b(weather|temperature|forecast|climate|rain|sun)\b/.test(text)) scores.weather += 3;
+    if (/\b(in|at|for)\b/.test(text) && scores.weather > 0) scores.weather += 1;
+
+    // Identity keywords
+    if (/\b(who|name|drakaina|aegon|identity)\b/.test(text)) scores.identity += 2;
+
+    // Find the highest score
+    let bestIntent = 'unknown';
+    let highestScore = 2; // Minimum score to qualify
+
+    for (const [intent, score] of Object.entries(scores)) {
+        if (score > highestScore) {
+            highestScore = score;
+            bestIntent = intent;
+        }
+    }
+
+    return bestIntent;
 }
 
-// Lightweight string similarity (edit distance)
+/**
+ * Fuzzy String Matching
+ */
 function stringSimilarity(str1, str2) {
-    const s1 = str1.toLowerCase();
-    const s2 = str2.toLowerCase();
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
+    if (s1 === s2) return 1.0;
+    
     const longer = s1.length > s2.length ? s1 : s2;
     const shorter = s1.length > s2.length ? s2 : s1;
     const longerLen = longer.length;
     if (longerLen === 0) return 1.0;
+    
     return (longerLen - editDistance(longer, shorter)) / longerLen;
 }
 
 function editDistance(s1, s2) {
     let costs = new Array(s2.length + 1);
     for (let i = 0; i <= s2.length; i++) costs[i] = i;
-    let prevCost;
     for (let i = 0; i < s1.length; i++) {
-        prevCost = i + 1;
+        let prevCost = i + 1;
         for (let j = 0; j < s2.length; j++) {
-            const newCost = s1[i] === s2[j] ? costs[j] : costs[j] + 1;
+            const newCost = s1[i] === s2[j] ? costs[j] : Math.min(costs[j], costs[j + 1], prevCost) + 1;
             costs[j] = prevCost;
             prevCost = newCost;
         }
@@ -59,87 +110,115 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// Find best learned response using similarity
-function findBestLearnedResponse(input) {
-    let bestMatch = null;
-    let highestScore = 0.68; // Minimum similarity threshold
-
-    for (const [key, response] of Object.entries(learnedResponses)) {
-        const score = stringSimilarity(input, key);
-        if (score > highestScore) {
-            highestScore = score;
-            bestMatch = response;
-        }
-    }
-    return bestMatch;
-}
-
-// Load chat history
-function loadChatHistory() {
-    responseArea.innerHTML = '';
-    chatHistory.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `message ${msg.sender}`;
-        div.textContent = msg.text;
-        responseArea.appendChild(div);
-    });
-    responseArea.scrollTop = responseArea.scrollHeight;
-}
-
-// Save to history
-function saveChatHistory(sender, text) {
-    chatHistory.push({ sender, text });
-    if (chatHistory.length > 100) chatHistory.shift();
-    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-}
-
-// Add message
+/**
+ * UI Actions
+ */
 function addMessage(text, sender) {
     const div = document.createElement('div');
     div.className = `message ${sender}`;
     div.textContent = text;
     responseArea.appendChild(div);
     responseArea.scrollTop = responseArea.scrollHeight;
-    saveChatHistory(sender, text);
+    
+    chatHistory.push({ sender, text, time: new Date().getTime() });
+    if (chatHistory.length > MAX_HISTORY) chatHistory.shift();
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
 }
 
-// Text-to-Speech with natural voice selection
 function speak(text) {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Try to use a more natural voice
-        const voices = speechSynthesis.getVoices();
-        const preferredVoice = voices.find(voice => 
-            voice.name.includes('Google US English') || 
-            voice.name.includes('Samantha') || 
-            voice.name.includes('Microsoft Zira') ||
-            voice.lang.includes('en-US')
-        );
-        
-        if (preferredVoice) utterance.voice = preferredVoice;
-        
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.lang === 'en-US');
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+}
+
+/**
+ * Response Processing
+ */
+function processInput(input) {
+    if (!input.trim()) return;
+    addMessage(input, 'user');
+
+    const intent = recognizeIntent(input);
+    let response = "";
+
+    switch (intent) {
+        case 'time':
+            response = `Current time is ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            break;
+        case 'date':
+            response = `Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
+            break;
+        case 'identity':
+            response = "I am Drakaina, a digital companion powered by Aegon 🐉. I am here to help you manage your strategic workflows.";
+            break;
+        case 'morse':
+            const textToConvert = input.replace(/translate|to|morse|code/gi, '').trim() || input;
+            response = textToMorse(textToConvert);
+            break;
+        case 'qr':
+            const qrData = input.replace(/generate|make|create|qr|code|for/gi, '').trim();
+            if (qrData) {
+                generateQRCode(qrData);
+                response = `Generated QR code for: "${qrData}"`;
+            } else {
+                response = "What data should I encode into the QR?";
+            }
+            break;
+        case 'note':
+            const noteText = input.replace(/take|save|write|note|remember|memo/gi, '').trim();
+            if (noteText) {
+                saveNote(noteText);
+                response = "Strategic note saved to local memory.";
+            } else {
+                response = "What would you like me to remember?";
+            }
+            break;
+        case 'weather':
+            response = "I can see you're asking about the weather! I currently don't have an active API key to fetch live data, but I can help you set one up in the code.";
+            break;
+        default:
+            // Check learned responses with fuzzy matching
+            let bestMatch = null;
+            let highestScore = SIMILARITY_THRESHOLD;
+
+            for (const [q, a] of Object.entries(learnedResponses)) {
+                const score = stringSimilarity(input, q);
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestMatch = a;
+                }
+            }
+
+            if (bestMatch) {
+                response = bestMatch;
+            } else {
+                response = "My current logic doesn't cover this request. Would you like to teach me how to respond?";
+                setTimeout(() => {
+                    pendingQuestion = input;
+                    learnedQuestion.textContent = input;
+                    assistantResponseInput.value = '';
+                    modal.style.display = 'flex';
+                }, 800);
+            }
+    }
+
+    if (response) {
+        addMessage(response, 'assistant');
+        speak(response);
     }
 }
 
-// Morse Code
-const MORSE_CODE_DICT = {
-    'a': '.-', 'b': '-...', 'c': '-.-.', 'd': '-..', 'e': '.', 'f': '..-.', 'g': '--.',
-    'h': '....', 'i': '..', 'j': '.---', 'k': '-.-', 'l': '.-..', 'm': '--', 'n': '-.',
-    'o': '---', 'p': '.--.', 'q': '--.-', 'r': '.-.', 's': '...', 't': '-', 'u': '..-',
-    'v': '...-', 'w': '.--', 'x': '-..-', 'y': '-.--', 'z': '--..',
-    '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
-    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/'
-};
-
+// Helpers
 function textToMorse(text) {
-    return text.toLowerCase().split('').map(char => MORSE_CODE_DICT[char] || char).join(' ');
+    const dict = { 'a': '.-', 'b': '-...', 'c': '-.-.', 'd': '-..', 'e': '.', 'f': '..-.', 'g': '--.', 'h': '....', 'i': '..', 'j': '.---', 'k': '-.-', 'l': '.-..', 'm': '--', 'n': '-.', 'o': '---', 'p': '.--.', 'q': '--.-', 'r': '.-.', 's': '...', 't': '-', 'u': '..-', 'v': '...-', 'w': '.--', 'x': '-..-', 'y': '-.--', 'z': '--..', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': '/' };
+    return text.toLowerCase().split('').map(c => dict[c] || c).join(' ');
 }
 
-// QR Code
 function generateQRCode(data) {
     const qrDiv = document.createElement('div');
     qrDiv.style.margin = "15px 0";
@@ -147,89 +226,19 @@ function generateQRCode(data) {
     new QRCode(qrDiv, { text: data, width: 200, height: 200 });
 }
 
-// Save Note
-function saveNote(note) {
-    let notes = JSON.parse(localStorage.getItem('assistant_notes')) || [];
-    notes.push({ text: note, time: new Date().toLocaleString() });
-    localStorage.setItem('assistant_notes', JSON.stringify(notes));
+function saveNote(text) {
+    let notes = JSON.parse(localStorage.getItem('drakaina_notes')) || [];
+    notes.push({ text, time: new Date().toLocaleString() });
+    localStorage.setItem('drakaina_notes', JSON.stringify(notes));
 }
 
-// Show all learned responses
 function showLearnedResponses() {
-    let message = "Learned Responses:\n\n";
     const entries = Object.entries(learnedResponses);
-    if (entries.length === 0) {
-        message += "No responses learned yet.";
-    } else {
-        entries.forEach(([q, a], i) => {
-            message += `${i+1}. "${q}" → "${a}"\n`;
-        });
-    }
-    addMessage(message, 'assistant');
-    speak("Here are the responses I have learned.");
+    let msg = entries.length ? "Learned Knowledge:\n\n" : "No learned responses yet.";
+    entries.forEach(([q, a], i) => msg += `${i+1}. "${q}" → "${a}"\n`);
+    addMessage(msg, 'assistant');
 }
 
-// Process Input (Core Logic)
-function processInput(input) {
-    if (!input.trim()) return;
-
-    addMessage(input, 'user');
-    chatContext.push({ role: 'user', text: input });
-    if (chatContext.length > MAX_CONTEXT) chatContext.shift();
-
-    const intent = recognizeIntent(input);
-    let response = "";
-
-    if (intent === 'time') {
-        response = `The current time is ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } else if (intent === 'date') {
-        response = `Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
-    } else if (intent === 'morse') {
-        const text = input.replace(/translate (.+) to morse/i, '$1').trim() || input;
-        response = textToMorse(text);
-    } else if (intent === 'qr_code') {
-        const data = input.replace(/generate qr code for |qr for /i, '').trim();
-        if (data) {
-            generateQRCode(data);
-            response = `QR code for "${data}" generated below.`;
-        } else {
-            response = "Please specify the content for the QR code.";
-        }
-    } else if (intent === 'note') {
-        const noteText = input.replace(/take a note|save a note|remember|note that/i, '').trim();
-        if (noteText) {
-            saveNote(noteText);
-            response = "Note saved successfully.";
-        } else {
-            response = "What would you like me to remember?";
-        }
-    } else {
-        let learned = learnedResponses[input.toLowerCase()];
-        if (!learned) {
-            learned = findBestLearnedResponse(input);
-        }
-        if (learned) {
-            response = learned;
-        } else {
-            response = "I'm not sure how to respond to that yet. Would you like to teach me?";
-            setTimeout(() => {
-                pendingQuestion = input;
-                learnedQuestion.textContent = input;
-                assistantResponseInput.value = '';
-                modal.style.display = 'flex';
-                assistantResponseInput.focus();
-            }, 800);
-        }
-    }
-
-    addMessage(response, 'assistant');
-    chatContext.push({ role: 'assistant', text: response });
-    if (chatContext.length > MAX_CONTEXT) chatContext.shift();
-
-    speak(response);
-}
-
-// Theme Toggle
 function toggleTheme() {
     document.body.classList.toggle('dark');
     const isDark = document.body.classList.contains('dark');
@@ -237,78 +246,42 @@ function toggleTheme() {
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
-// Event Listeners
-sendBtn.addEventListener('click', () => {
-    const input = userInput.value.trim();
-    if (input) {
-        processInput(input);
-        userInput.value = '';
-    }
-});
+// Listeners
+sendBtn.onclick = () => { processInput(userInput.value); userInput.value = ''; };
+userInput.onkeypress = (e) => { if (e.key === 'Enter') sendBtn.click(); };
 
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendBtn.click();
-});
+aboutBtn.onclick = () => aboutModal.style.display = 'flex';
+closeAboutBtn.onclick = () => aboutModal.style.display = 'none';
+themeToggle.onclick = toggleTheme;
+manageLearnedBtn.onclick = showLearnedResponses;
 
-voiceBtn.addEventListener('click', () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        alert("Voice recognition is not supported in this browser.");
-        return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        userInput.value = transcript;
-        processInput(transcript);
-    };
-    recognition.start();
-});
-
-themeToggle.addEventListener('click', toggleTheme);
-manageLearnedBtn.addEventListener('click', showLearnedResponses);
-
-aboutBtn.addEventListener('click', () => {
-    aboutModal.style.display = 'flex';
-});
-
-closeAboutBtn.addEventListener('click', () => {
-    aboutModal.style.display = 'none';
-});
-
-saveLearnBtn.addEventListener('click', () => {
+saveLearnBtn.onclick = () => {
     const answer = assistantResponseInput.value.trim();
     if (answer && pendingQuestion) {
         learnedResponses[pendingQuestion.toLowerCase()] = answer;
         localStorage.setItem('learnedResponses', JSON.stringify(learnedResponses));
-        addMessage("Thank you! I've learned this response.", "assistant");
-        speak("Thank you! I've learned how to respond.");
+        addMessage("Understood. I have added this to my knowledge base.", "assistant");
     }
     modal.style.display = 'none';
-});
+};
 
-cancelLearnBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-});
+cancelLearnBtn.onclick = () => modal.style.display = 'none';
 
-// Initialize
 window.onload = () => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark');
         themeToggle.textContent = '☀️';
     }
-
-    loadChatHistory();
     
-    // Load voices and set a default greeting
-    window.speechSynthesis.onvoiceschanged = () => {
-        if (chatHistory.length === 0) {
-            const welcome = "Hello! How can I assist you today?";
-            addMessage(welcome, 'assistant');
-            speak(welcome);
-        }
-    };
+    // Load History
+    chatHistory.forEach(m => {
+        const div = document.createElement('div');
+        div.className = `message ${m.sender}`;
+        div.textContent = m.text;
+        responseArea.appendChild(div);
+    });
+    responseArea.scrollTop = responseArea.scrollHeight;
+
     window.speechSynthesis.getVoices();
+    if (!chatHistory.length) addMessage("Hello Ndirangu. Drakaina is online. How shall we proceed?", "assistant");
 };

@@ -15,9 +15,6 @@
   "author": "Ndirangu Mwaniki",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^30.0.0"
-  },
-  "dependencies": {
-    "electron-updater": "^6.1.7"
+    "electron": "^41.1.1"
   }
 }

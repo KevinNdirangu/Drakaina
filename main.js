@@ -14,7 +14,7 @@ function createWindow() {
         title: "Drakaina 🐉"
     });
 
-    win.loadFile('index.html');
+    win.loadFile('src/index.html');
 }
 
 app.whenReady().then(() => {

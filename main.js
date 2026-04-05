@@ -21,6 +21,11 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    // Add speech-related command-line flags
+    app.commandLine.appendSwitch('enable-speech-dispatcher');
+    app.commandLine.appendSwitch('enable-media-stream');
+    app.commandLine.appendSwitch('use-fake-ui-for-media-stream');
+
     createWindow();
 
     app.on('activate', () => {

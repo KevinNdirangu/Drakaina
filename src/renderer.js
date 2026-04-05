@@ -308,6 +308,12 @@ voiceBtn.onclick = () => {
         userInput.value = transcript;
         processInput(transcript);
     };
+    recognition.onerror = (event) => {
+        console.error("Speech Recognition Error:", event.error);
+        alert(`Voice Recognition Error: ${event.error}. Please try typing instead!`);
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.background = '#28a745';
+    };
     recognition.onend = () => {
         voiceBtn.textContent = '🎤';
         voiceBtn.style.background = '#28a745';

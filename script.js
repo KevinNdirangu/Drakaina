@@ -15,6 +15,9 @@ const saveLearnBtn = document.getElementById('save-learn');
 const cancelLearnBtn = document.getElementById('cancel-learn');
 const themeToggle = document.getElementById('theme-toggle');
 const manageLearnedBtn = document.getElementById('manage-learned');
+const aboutBtn = document.getElementById('about-btn');
+const aboutModal = document.getElementById('about-modal');
+const closeAboutBtn = document.getElementById('close-about');
 
 let pendingQuestion = '';
 
@@ -265,6 +268,14 @@ voiceBtn.addEventListener('click', () => {
 
 themeToggle.addEventListener('click', toggleTheme);
 manageLearnedBtn.addEventListener('click', showLearnedResponses);
+
+aboutBtn.addEventListener('click', () => {
+    aboutModal.style.display = 'flex';
+});
+
+closeAboutBtn.addEventListener('click', () => {
+    aboutModal.style.display = 'none';
+});
 
 saveLearnBtn.addEventListener('click', () => {
     const answer = assistantResponseInput.value.trim();

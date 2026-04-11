@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-// Drakaina 1.2.1 - Electron Edition
+// Drakaina 1.3.1 - Electron Edition
 let learnedResponses = {};
 let chatHistory = [];
 
@@ -19,6 +19,7 @@ const assistantResponseInput = document.getElementById('assistant-response');
 const saveLearnBtn = document.getElementById('save-learn');
 const cancelLearnBtn = document.getElementById('cancel-learn');
 const themeToggle = document.getElementById('theme-toggle');
+const clearHistoryBtn = document.getElementById('clear-history');
 const manageLearnedBtn = document.getElementById('manage-learned');
 const aboutBtn = document.getElementById('about-btn');
 const aboutModal = document.getElementById('about-modal');
@@ -58,7 +59,8 @@ function recognizeIntent(input) {
         qr: 0,
         note: 0,
         weather: 0,
-        identity: 0
+        identity: 0,
+        sysinfo: 0
     };
 
     // Time keywords
@@ -81,6 +83,9 @@ function recognizeIntent(input) {
 
     // Identity keywords
     if (/\b(who|name|drakaina|aegon|identity|who.*are.*you)\b/.test(text)) scores.identity += 4;
+
+    // System info keywords
+    if (/\b(system|cpu|memory|ram|stats|performance|usage)\b/.test(text)) scores.sysinfo += 3;
 
     let bestIntent = 'unknown';
     let highestScore = 2; 
@@ -225,6 +230,16 @@ function processInput(input) {
         case 'weather':
             response = "I can see you're asking about the weather! I currently don't have an active API key to fetch live data, but I can help you set one up in the code.";
             break;
+        case 'sysinfo':
+            const si = require('systeminformation');
+            Promise.all([si.currentLoad(), si.mem()]).then(([load, mem]) => {
+                const cpu = load.currentLoad.toFixed(1);
+                const ram = ((mem.used / mem.total) * 100).toFixed(1);
+                const msg = `System status: CPU at ${cpu}% and Memory at ${ram}%.`;
+                addMessage(msg, 'assistant');
+                speak(msg);
+            });
+            return; // Exit early as we add the message in the promise
         default:
             let bestMatch = null;
             let highestScore = SIMILARITY_THRESHOLD;
@@ -291,6 +306,15 @@ closeAboutBtn.onclick = () => aboutModal.style.display = 'none';
 
 themeToggle.onclick = toggleTheme;
 manageLearnedBtn.onclick = showLearnedResponses;
+
+clearHistoryBtn.onclick = () => {
+    if (confirm("Are you sure you want to clear the entire chat history?")) {
+        chatHistory = [];
+        saveData('history.json', chatHistory);
+        renderHistory();
+        addMessage("Chat history has been cleared. How shall we proceed, Ndirangu?", "assistant");
+    }
+};
 
 voiceBtn.onclick = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

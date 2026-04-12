@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-// Drakaina 1.3.1 - Electron Edition
+// Drakaina 1.3.3 - Electron Edition
 let learnedResponses = {};
 let chatHistory = [];
 
@@ -60,7 +60,8 @@ function recognizeIntent(input) {
         note: 0,
         weather: 0,
         identity: 0,
-        sysinfo: 0
+        sysinfo: 0,
+        project: 0
     };
 
     // Time keywords
@@ -86,6 +87,9 @@ function recognizeIntent(input) {
 
     // System info keywords
     if (/\b(system|cpu|memory|ram|stats|performance|usage)\b/.test(text)) scores.sysinfo += 3;
+
+    // Project keywords
+    if (/\b(project|status|current|working|active)\b/.test(text)) scores.project += 3;
 
     let bestIntent = 'unknown';
     let highestScore = 2; 
@@ -240,6 +244,9 @@ function processInput(input) {
                 speak(msg);
             });
             return; // Exit early as we add the message in the promise
+        case 'project':
+            response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.2";
+            break;
         default:
             let bestMatch = null;
             let highestScore = SIMILARITY_THRESHOLD;

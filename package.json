@@ -1,7 +1,7 @@
 {
   "name": "drakaina",
   "productName": "Drakaina",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Drakaina - Powered by Aegon 🐉",
   "main": "main.js",
   "scripts": {

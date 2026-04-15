@@ -232,7 +232,7 @@ function processInput(input) {
             const noteText = input.replace(/take|save|write|note|remember|memo/gi, '').trim();
             if (noteText) {
                 saveData('notes.json', { note: noteText, time: new Date().toLocaleString(), status: 'active' });
-                response = "Strategic note saved to JSON memory. Status set to active.";
+                response = "Strategic note saved to JSON memory. I will hold this information for your review.";
             } else {
                 response = "What would you like me to remember?";
             }

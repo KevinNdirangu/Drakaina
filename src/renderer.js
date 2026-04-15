@@ -255,7 +255,7 @@ function processInput(input) {
             response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.5";
             break;
         case 'help':
-            response = "I can assist with: \n• Time/Date checks\n• System status (CPU, RAM, Battery)\n• QR Code generation\n• Morse code translation\n• Strategic note taking\n• Project tracking";
+            response = "I can assist with: \n• Time/Date checks\n• System status (CPU, RAM, Battery)\n• QR Code generation\n• Morse code translation\n• Strategic note taking\n• Project tracking\n• Learning new responses";
             break;
         case 'greeting':
             const hr = new Date().getHours();

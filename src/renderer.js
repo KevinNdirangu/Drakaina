@@ -213,7 +213,7 @@ function processInput(input) {
             response = `Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
             break;
         case 'identity':
-            response = "I am Drakaina, a digital companion powered by Aegon 🐉. I am here to help you manage your strategic workflows.";
+            response = "I am Drakaina, a digital companion powered by Aegon 🐉. I am here to help you manage your strategic workflows and secure your digital dominion.";
             break;
         case 'morse':
             const textToConvert = input.replace(/translate|to|morse|code/gi, '').trim() || input;

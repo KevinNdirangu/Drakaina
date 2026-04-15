@@ -223,7 +223,7 @@ function processInput(input) {
             const qrData = input.replace(/generate|make|create|qr|code|for/gi, '').trim();
             if (qrData) {
                 generateQRCode(qrData);
-                response = `Generated QR code for: "${qrData}"`;
+                response = `Generated QR code for: "${qrData}". Use the "Clear History" button to remove it from view if needed.`;
             } else {
                 response = "What data should I encode into the QR?";
             }

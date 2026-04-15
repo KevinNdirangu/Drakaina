@@ -94,6 +94,9 @@ function recognizeIntent(input) {
     // Help keywords
     if (/\b(help|commands|what.*can.*you.*do|list)\b/.test(text)) scores.help += 4;
 
+    // Greeting keywords
+    if (/\b(hello|hi|hey|greetings|good.*morning|good.*afternoon|good.*evening)\b/.test(text)) scores.greeting += 4;
+
     let bestIntent = 'unknown';
     let highestScore = 2; 
 
@@ -253,6 +256,14 @@ function processInput(input) {
             break;
         case 'help':
             response = "I can assist with: \n• Time/Date checks\n• System status (CPU, RAM, Battery)\n• QR Code generation\n• Morse code translation\n• Strategic note taking\n• Project tracking";
+            break;
+        case 'greeting':
+            const hr = new Date().getHours();
+            let greet = "Hello";
+            if (hr < 12) greet = "Good morning";
+            else if (hr < 18) greet = "Good afternoon";
+            else greet = "Good evening";
+            response = `${greet}, Ndirangu. How shall we advance our objectives today?`;
             break;
         default:
             let bestMatch = null;

@@ -91,6 +91,9 @@ function recognizeIntent(input) {
     // Project keywords
     if (/\b(project|status|current|working|active)\b/.test(text)) scores.project += 3;
 
+    // Help keywords
+    if (/\b(help|commands|what.*can.*you.*do|list)\b/.test(text)) scores.help += 4;
+
     let bestIntent = 'unknown';
     let highestScore = 2; 
 
@@ -247,6 +250,9 @@ function processInput(input) {
             return; // Exit early as we add the message in the promise
         case 'project':
             response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.5";
+            break;
+        case 'help':
+            response = "I can assist with: \n• Time/Date checks\n• System status (CPU, RAM, Battery)\n• QR Code generation\n• Morse code translation\n• Strategic note taking\n• Project tracking";
             break;
         default:
             let bestMatch = null;

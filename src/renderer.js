@@ -236,16 +236,17 @@ function processInput(input) {
             break;
         case 'sysinfo':
             const si = require('systeminformation');
-            Promise.all([si.currentLoad(), si.mem()]).then(([load, mem]) => {
+            Promise.all([si.currentLoad(), si.mem(), si.battery()]).then(([load, mem, batt]) => {
                 const cpu = load.currentLoad.toFixed(1);
                 const ram = ((mem.used / mem.total) * 100).toFixed(1);
-                const msg = `System status: CPU at ${cpu}% and Memory at ${ram}%.`;
+                const battStatus = batt.hasBattery ? `, Battery at ${batt.percent}% (${batt.isCharging ? 'Charging' : 'Discharging'})` : '';
+                const msg = `System status: CPU at ${cpu}% and Memory at ${ram}%${battStatus}.`;
                 addMessage(msg, 'assistant');
                 speak(msg);
             });
             return; // Exit early as we add the message in the promise
         case 'project':
-            response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.2";
+            response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.5";
             break;
         default:
             let bestMatch = null;

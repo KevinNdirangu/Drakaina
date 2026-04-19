@@ -262,7 +262,8 @@ function processInput(input) {
             let greet = "Hello";
             if (hr < 12) greet = "Good morning";
             else if (hr < 18) greet = "Good afternoon";
-            else greet = "Good evening";
+            else if (hr < 22) greet = "Good evening";
+            else greet = "Burning the midnight oil";
             response = `${greet}, Ndirangu. How shall we advance our objectives today?`;
             break;
         default:

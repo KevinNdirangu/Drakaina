@@ -24,6 +24,7 @@ const manageLearnedBtn = document.getElementById('manage-learned');
 const aboutBtn = document.getElementById('about-btn');
 const aboutModal = document.getElementById('about-modal');
 const closeAboutBtn = document.getElementById('close-about');
+const connectionStatus = document.getElementById('connection-status');
 
 let pendingQuestion = '';
 
@@ -178,7 +179,7 @@ function speak(text) {
     const voices = window.speechSynthesis.getVoices();
     
     // Attempt to find a high-quality "English" voice
-    const preferredVoices = ['Google US English', 'Samantha', 'Microsoft Zira', 'Microsoft Sarah'];
+    const preferredVoices = ['Google US English', 'Samantha', 'Microsoft Zira', 'Microsoft Sarah', 'Google UK English Male'];
     let selectedVoice = voices.find(v => preferredVoices.includes(v.name));
     
     if (!selectedVoice) {
@@ -190,8 +191,9 @@ function speak(text) {
         console.log(`Using voice: ${selectedVoice.name}`);
     }
     
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
+    // Strategic personality: slower, more deliberate speech for Aegon's directives
+    utterance.rate = 0.95;
+    utterance.pitch = 0.9;
     window.speechSynthesis.speak(utterance);
 }
 
@@ -252,7 +254,7 @@ function processInput(input) {
             });
             return; // Exit early as we add the message in the promise
         case 'project':
-            response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.5";
+            response = "Active Projects: \n1. PROJECT BETA (HR Tool) - On Break\n2. Echoes of Deception (Book) - Writing\n3. Drakaina (Digital Companion) - Evolution v1.3.8\n4. Dryad Monitor - System Surveillance";
             break;
         case 'help':
             response = "I can assist with: \n• Time/Date checks\n• System status (CPU, RAM, Battery)\n• QR Code generation\n• Morse code translation\n• Strategic note taking\n• Project tracking\n• Learning new responses";
@@ -383,6 +385,24 @@ saveLearnBtn.onclick = () => {
 };
 
 cancelLearnBtn.onclick = () => modal.style.display = 'none';
+
+function updateConnectionStatus() {
+    if (connectionStatus) {
+        if (navigator.onLine) {
+            connectionStatus.textContent = '🌐 Connected';
+            connectionStatus.style.color = '#2ecc71';
+            connectionStatus.title = 'Internet connection active';
+        } else {
+            connectionStatus.textContent = '❌ Offline';
+            connectionStatus.style.color = '#e74c3c';
+            connectionStatus.title = 'No internet connection';
+        }
+    }
+}
+
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+updateConnectionStatus();
 
 window.onload = () => {
     loadData('knowledge.json');
